@@ -25,7 +25,7 @@ public class EchoStat {
     private Loadout loadout;
 
     @Column(name = "slot_number", nullable = false)
-    private int slotNumber;
+    private short slotNumber;
 
     @Column(name = "crit_rate", nullable = false, precision = 4, scale = 1)
     private BigDecimal critRate;
@@ -37,7 +37,7 @@ public class EchoStat {
     }
 
     public EchoStat(int slotNumber, BigDecimal critRate, BigDecimal critDamage) {
-        this.slotNumber = slotNumber;
+        this.slotNumber = (short) slotNumber;
         this.critRate = critRate;
         this.critDamage = critDamage;
     }
