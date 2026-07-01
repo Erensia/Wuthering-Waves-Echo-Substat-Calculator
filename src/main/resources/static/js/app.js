@@ -91,6 +91,7 @@ logoutButton.addEventListener("click", async () => {
         savedLoadouts = [];
         authForm.reset();
         authMessage.textContent = "";
+        resetCalculator();
         updateAccountUi();
     }
 });
@@ -300,6 +301,16 @@ function updateAccountUi() {
 function clearMessages() {
     errorElement.textContent = "";
     saveMessage.textContent = "";
+}
+
+function resetCalculator() {
+    scoreForm.reset();
+    lastRequest = null;
+    clearMessages();
+    resultElement.classList.add("hidden");
+    document.querySelectorAll(".echo-evaluation").forEach((evaluation) => {
+        evaluation.classList.add("hidden");
+    });
 }
 
 async function api(url, options = {}, allowEmpty = false) {
