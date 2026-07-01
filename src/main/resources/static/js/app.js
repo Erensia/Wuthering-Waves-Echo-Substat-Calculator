@@ -21,6 +21,10 @@ for (let index = 1; index <= 5; index += 1) {
                 <span class="input-wrap"><input name="critDamage-${index}" type="number" min="0" max="200"
                     step="0.1" value="0" required><b>%</b></span>
             </label>
+            <div class="echo-evaluation hidden" id="echo-evaluation-${index}">
+                <strong id="echo-score-${index}">0.0점</strong>
+                <span class="echo-grade" id="echo-grade-${index}"></span>
+            </div>
         </article>
     `);
 }
@@ -87,6 +91,14 @@ saveButton.addEventListener("click", async () => {
 });
 
 function renderResult(result) {
+    result.echoScores.forEach((echo) => {
+        const evaluation = document.querySelector(`#echo-evaluation-${echo.slotNumber}`);
+        const grade = document.querySelector(`#echo-grade-${echo.slotNumber}`);
+        document.querySelector(`#echo-score-${echo.slotNumber}`).textContent = `${Number(echo.score).toFixed(1)}점`;
+        grade.textContent = echo.gradeLabel;
+        grade.dataset.grade = echo.grade;
+        evaluation.classList.remove("hidden");
+    });
     document.querySelector("#score").textContent = Number(result.score).toFixed(1);
     document.querySelector("#grade").textContent = result.gradeLabel;
     document.querySelector("#grade").dataset.grade = result.grade;

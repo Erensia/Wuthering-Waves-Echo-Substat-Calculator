@@ -2,6 +2,8 @@ package com.wuwa.echograder.score;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Service;
 
@@ -23,6 +25,9 @@ public class ScoreService {
                 .add(mainStatScore)
                 .setScale(1, RoundingMode.HALF_UP);
         Grade grade = Grade.from(score);
+        List<EchoScoreResult> echoScores = IntStream.range(0, request.echoes().size())
+                .mapToObj(index -> calculateEchoScore(index + 1, request.echoes().get(index)))
+                .toList();
 
         return new ScoreResult(
                 totalCritRate.setScale(1, RoundingMode.HALF_UP),
@@ -31,7 +36,16 @@ public class ScoreService {
                 score,
                 grade,
                 grade.getLabel(),
-                pointsToNextGrade(score));
+                pointsToNextGrade(score),
+                echoScores);
+    }
+
+    private EchoScoreResult calculateEchoScore(int slotNumber, EchoInput echo) {
+        BigDecimal score = echo.critRate().multiply(TWO)
+                .add(echo.critDamage())
+                .setScale(1, RoundingMode.HALF_UP);
+        EchoGrade grade = EchoGrade.from(score);
+        return new EchoScoreResult(slotNumber, score, grade, grade.getLabel());
     }
 
     private BigDecimal pointsToNextGrade(BigDecimal score) {
