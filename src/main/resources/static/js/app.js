@@ -15,18 +15,36 @@ const savedSection = document.querySelector("#saved-section");
 const savedGrid = document.querySelector("#saved-grid");
 const emptyState = document.querySelector("#empty-state");
 const refreshLoadouts = document.querySelector("#refresh-loadouts");
+const memberSearchForm = document.querySelector("#member-search-form");
+const memberQuery = document.querySelector("#member-query");
+const memberSearchMessage = document.querySelector("#member-search-message");
+const memberResults = document.querySelector("#member-results");
+const passwordChangeForm = document.querySelector("#password-change-form");
+const passwordChangeUsername = document.querySelector("#password-change-username");
+const passwordChangeMessage = document.querySelector("#password-change-message");
+const cancelPasswordChange = document.querySelector("#cancel-password-change");
+const costTotal = document.querySelector("#cost-total");
+const totalCost = document.querySelector("#total-cost");
 
 let currentUser = null;
 let lastRequest = null;
 let savedLoadouts = [];
 const defaultCosts = ["COST_4", "COST_3", "COST_3", "COST_1", "COST_1"];
+const maxTotalCost = 12;
+const critRateValues = [0, 6.3, 6.9, 7.5, 8.1, 8.7, 9.3, 9.9, 10.5];
+const critDamageValues = [0, 12.6, 13.8, 15, 16.2, 17.4, 18.6, 19.8, 21];
 
 buildEchoInputs();
+updateCostUi();
 restoreSession();
 
 scoreForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     clearMessages();
+    if (!isTotalCostValid()) {
+        errorElement.textContent = "에코 코스트 합계는 12 이하여야 합니다.";
+        return;
+    }
     lastRequest = readScoreRequest();
 
     try {
@@ -98,7 +116,65 @@ logoutButton.addEventListener("click", async () => {
 
 refreshLoadouts.addEventListener("click", loadSavedLoadouts);
 
+scoreForm.addEventListener("change", (event) => {
+    if (event.target.matches('select[name^="cost-"]')) {
+        updateCostUi();
+    }
+});
+
+memberSearchForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    memberSearchMessage.textContent = "";
+    memberResults.innerHTML = "";
+
+    try {
+        const users = await api(`/api/v1/users/search?query=${encodeURIComponent(memberQuery.value)}`);
+        renderMemberResults(users);
+    } catch (error) {
+        memberSearchMessage.textContent = error.message;
+    }
+});
+
+memberResults.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-password-change]");
+    if (!button || !currentUser) {
+        return;
+    }
+    passwordChangeForm.reset();
+    passwordChangeMessage.textContent = "";
+    passwordChangeUsername.textContent = currentUser.username;
+    passwordChangeForm.classList.remove("hidden");
+    document.querySelector("#current-password").focus();
+});
+
+cancelPasswordChange.addEventListener("click", closePasswordChange);
+
+passwordChangeForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    passwordChangeMessage.textContent = "";
+
+    try {
+        await api("/api/v1/auth/password", {
+            method: "PATCH",
+            body: JSON.stringify({
+                currentPassword: document.querySelector("#current-password").value,
+                newPassword: document.querySelector("#new-password").value
+            })
+        }, true);
+        passwordChangeForm.reset();
+        passwordChangeMessage.textContent = "비밀번호를 변경했습니다.";
+    } catch (error) {
+        passwordChangeMessage.textContent = error.message;
+    }
+});
+
 savedGrid.addEventListener("click", async (event) => {
+    const deleteButton = event.target.closest("[data-delete-loadout-id]");
+    if (deleteButton) {
+        await deleteLoadout(deleteButton);
+        return;
+    }
+
     const button = event.target.closest("[data-loadout-id]");
     if (!button) {
         return;
@@ -122,6 +198,10 @@ savedGrid.addEventListener("click", async (event) => {
 });
 
 function buildEchoInputs() {
+    const statOptions = (values) => values.map((value) =>
+        `<option value="${value}">${value === 0 ? "없음 (0%)" : `${value}%`}</option>`
+    ).join("");
+
     for (let index = 1; index <= 5; index += 1) {
         const costOptions = [
             ["COST_4", "4 코스트"],
@@ -145,13 +225,15 @@ function buildEchoInputs() {
                 </label>
                 <label>
                     <span>치명타 확률</span>
-                    <span class="input-wrap"><input name="critRate-${index}" type="number" min="0" max="100"
-                        step="0.1" value="0" required><b>%</b></span>
+                    <select name="critRate-${index}" required>
+                        ${statOptions(critRateValues)}
+                    </select>
                 </label>
                 <label>
                     <span>치명타 피해</span>
-                    <span class="input-wrap"><input name="critDamage-${index}" type="number" min="0" max="200"
-                        step="0.1" value="0" required><b>%</b></span>
+                    <select name="critDamage-${index}" required>
+                        ${statOptions(critDamageValues)}
+                    </select>
                 </label>
                 <div class="echo-evaluation hidden" id="echo-evaluation-${index}">
                     <strong id="echo-score-${index}">0.0점</strong>
@@ -235,6 +317,7 @@ function applyLoadout(loadout) {
         scoreForm.elements[`critRate-${slot}`].value = echo.critRate;
         scoreForm.elements[`critDamage-${slot}`].value = echo.critDamage;
     });
+    updateCostUi();
 }
 
 function renderResult(result) {
@@ -278,9 +361,69 @@ function renderSavedLoadouts() {
                     <span><b>${echo.slotNumber}</b> ${echo.cost}C · 치확 ${Number(echo.critRate).toFixed(1)} · 치피 ${Number(echo.critDamage).toFixed(1)}</span>
                 `).join("")}
             </div>
-            <button class="load-button" data-loadout-id="${loadout.id}" type="button">계산기에 불러오기</button>
+            <div class="saved-actions">
+                <button class="load-button" data-loadout-id="${loadout.id}" type="button">계산기에 불러오기</button>
+                <button class="delete-button" data-delete-loadout-id="${loadout.id}" type="button"
+                        aria-label="${escapeHtml(loadout.name || "이름 없는 세트")} 삭제">삭제</button>
+            </div>
         </article>
     `).join("");
+}
+
+async function deleteLoadout(button) {
+    const loadout = savedLoadouts.find((item) => item.id === button.dataset.deleteLoadoutId);
+    if (!loadout) {
+        return;
+    }
+
+    const name = loadout.name || "이름 없는 세트";
+    if (!window.confirm(`"${name}" 프리셋을 삭제할까요?`)) {
+        return;
+    }
+
+    button.disabled = true;
+    try {
+        await api(`/api/v1/loadouts/${loadout.id}`, {method: "DELETE"}, true);
+        savedLoadouts = savedLoadouts.filter((item) => item.id !== loadout.id);
+        renderSavedLoadouts();
+        saveMessage.textContent = `"${name}" 프리셋을 삭제했습니다.`;
+    } catch (error) {
+        button.disabled = false;
+        saveMessage.textContent = "";
+        errorElement.textContent = error.message;
+    }
+}
+
+function renderMemberResults(users) {
+    if (users.length === 0) {
+        memberSearchMessage.textContent = "검색 결과가 없습니다.";
+        return;
+    }
+
+    memberSearchMessage.textContent = `${users.length}명의 회원을 찾았습니다.`;
+    memberResults.innerHTML = users.map((user) => {
+        const isCurrentUser = user.username === currentUser?.username;
+        return `
+            <article class="member-card">
+                <div class="member-identity">
+                    <strong>${escapeHtml(user.username)}</strong>
+                    ${isCurrentUser ? '<span class="current-user-badge">본인</span>' : ""}
+                </div>
+                <div class="member-meta">
+                    <time>가입일 ${formatDate(user.joinedAt)}</time>
+                    ${isCurrentUser
+                        ? '<button class="secondary-small" data-password-change type="button">비밀번호 변경</button>'
+                        : ""}
+                </div>
+            </article>
+        `;
+    }).join("");
+}
+
+function closePasswordChange() {
+    passwordChangeForm.reset();
+    passwordChangeMessage.textContent = "";
+    passwordChangeForm.classList.add("hidden");
 }
 
 function updateAccountUi() {
@@ -295,7 +438,37 @@ function updateAccountUi() {
     } else {
         savedGrid.innerHTML = "";
         emptyState.classList.add("hidden");
+        memberSearchForm.reset();
+        memberSearchMessage.textContent = "";
+        memberResults.innerHTML = "";
+        closePasswordChange();
     }
+}
+
+function getTotalCost() {
+    return Array.from({length: 5}, (_, index) => {
+        const value = scoreForm.elements[`cost-${index + 1}`].value;
+        return Number(value.replace("COST_", ""));
+    }).reduce((sum, value) => sum + value, 0);
+}
+
+function isTotalCostValid() {
+    return getTotalCost() <= maxTotalCost;
+}
+
+function updateCostUi() {
+    const currentTotal = getTotalCost();
+    totalCost.textContent = currentTotal;
+    costTotal.classList.toggle("invalid", currentTotal > maxTotalCost);
+
+    scoreForm.querySelectorAll('select[name^="cost-"]').forEach((select) => {
+        const selectedCost = Number(select.value.replace("COST_", ""));
+        Array.from(select.options).forEach((option) => {
+            const candidateCost = Number(option.value.replace("COST_", ""));
+            option.disabled = option.value !== select.value
+                && currentTotal - selectedCost + candidateCost > maxTotalCost;
+        });
+    });
 }
 
 function clearMessages() {
@@ -305,6 +478,7 @@ function clearMessages() {
 
 function resetCalculator() {
     scoreForm.reset();
+    updateCostUi();
     lastRequest = null;
     clearMessages();
     resultElement.classList.add("hidden");

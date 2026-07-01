@@ -67,6 +67,18 @@ public class AuthService {
         return AuthResult.from(requireUser(session));
     }
 
+    @Transactional
+    public void changePassword(PasswordChangeRequest request, HttpSession session) {
+        UserAccount user = requireUser(session);
+        if (!user.getPassword().equals(request.currentPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다.");
+        }
+        if (user.getPassword().equals(request.newPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "새 비밀번호는 현재 비밀번호와 달라야 합니다.");
+        }
+        user.changePassword(request.newPassword());
+    }
+
     public void logout(HttpSession session) {
         session.invalidate();
     }

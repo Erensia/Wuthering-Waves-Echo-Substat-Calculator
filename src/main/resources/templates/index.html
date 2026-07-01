@@ -63,7 +63,10 @@
             <small>주옵션은 환산 점수 44점으로 동일하게 반영됩니다.</small>
         </section>
 
-        <p class="echo-grade-guide">극종결 37.8+ · 종결 33.6+ · 준종결 29.4+ · 그 외 재세팅 필요</p>
+        <div class="echo-guide-row">
+            <p class="echo-grade-guide">극종결 37.8+ · 종결 33.6+ · 준종결 29.4+ · 그 외 재세팅 필요</p>
+            <p class="cost-total" id="cost-total">에코 코스트 <strong id="total-cost">12</strong> / 12</p>
+        </div>
         <section class="echo-grid" id="echo-grid"></section>
 
         <label class="loadout-name">
@@ -101,6 +104,46 @@
         </div>
         <div class="saved-grid" id="saved-grid"></div>
         <p class="empty-state hidden" id="empty-state">아직 저장한 세트가 없습니다. 첫 세트를 계산해 저장해보세요.</p>
+    </section>
+
+    <section class="member-section" id="member-section">
+        <div>
+            <p class="section-kicker">MEMBER SEARCH</p>
+            <h2>회원 찾기</h2>
+        </div>
+        <form class="member-search-form" id="member-search-form">
+            <label for="member-query">회원 아이디</label>
+            <div>
+                <input id="member-query" type="search" minlength="1" maxlength="30"
+                       placeholder="아이디 일부를 입력하세요" required>
+                <button class="primary-small" type="submit">검색</button>
+            </div>
+        </form>
+        <p class="member-search-message" id="member-search-message" role="status"></p>
+        <div class="member-results" id="member-results"></div>
+        <form class="password-change-panel hidden" id="password-change-form">
+            <div class="password-change-heading">
+                <div>
+                    <p class="section-kicker">SECURITY</p>
+                    <h3><span id="password-change-username"></span> 비밀번호 변경</h3>
+                </div>
+                <button class="secondary-small" id="cancel-password-change" type="button">취소</button>
+            </div>
+            <div class="password-fields">
+                <label>
+                    <span>현재 비밀번호</span>
+                    <input id="current-password" type="password" minlength="4" maxlength="100"
+                           autocomplete="current-password" required>
+                </label>
+                <label>
+                    <span>새 비밀번호</span>
+                    <input id="new-password" type="password" minlength="4" maxlength="100"
+                           autocomplete="new-password" required>
+                </label>
+            </div>
+            <button class="primary-small" type="submit">변경하기</button>
+            <p class="password-change-message" id="password-change-message" role="status"></p>
+        </form>
     </section>
 </main>
 <script th:src="@{/js/app.js}" src="/js/app.js"></script>

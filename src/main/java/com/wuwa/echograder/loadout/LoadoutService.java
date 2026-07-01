@@ -1,6 +1,7 @@
 package com.wuwa.echograder.loadout;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.wuwa.echograder.auth.UserAccount;
 import com.wuwa.echograder.score.EchoInput;
@@ -46,9 +47,14 @@ public class LoadoutService {
 
     @Transactional(readOnly = true)
     public List<LoadoutResult> findAll(UserAccount user) {
-        return repository.findAllByUserIdOrderByCreatedAtDesc(user.getId()).stream()
+        return repository.findAllByUserIdOrderByScoreDescNameAscCreatedAtDesc(user.getId()).stream()
                 .map(LoadoutResult::from)
                 .toList();
+    }
+
+    @Transactional
+    public boolean delete(UUID id, UserAccount user) {
+        return repository.deleteByIdAndUserId(id, user.getId()) > 0;
     }
 
     private String normalizeName(String name) {

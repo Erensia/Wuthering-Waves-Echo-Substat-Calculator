@@ -51,4 +51,37 @@ class AuthServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("401 UNAUTHORIZED");
     }
+
+    @Test
+    void changePasswordUpdatesSignedInUsersPassword() {
+        AuthService service = new AuthService(repository);
+        MockHttpSession session = new MockHttpSession();
+        UserAccount user = new UserAccount("tester", "old-password");
+        user.onCreate();
+        session.setAttribute(AuthService.USER_ID_SESSION_KEY, user.getId());
+        when(repository.findById(user.getId())).thenReturn(Optional.of(user));
+
+        service.changePassword(
+                new PasswordChangeRequest("old-password", "new-password"),
+                session);
+
+        assertThat(user.getPassword()).isEqualTo("new-password");
+    }
+
+    @Test
+    void changePasswordRejectsWrongCurrentPassword() {
+        AuthService service = new AuthService(repository);
+        MockHttpSession session = new MockHttpSession();
+        UserAccount user = new UserAccount("tester", "correct-password");
+        user.onCreate();
+        session.setAttribute(AuthService.USER_ID_SESSION_KEY, user.getId());
+        when(repository.findById(user.getId())).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> service.changePassword(
+                new PasswordChangeRequest("wrong-password", "new-password"),
+                session))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("401 UNAUTHORIZED");
+        assertThat(user.getPassword()).isEqualTo("correct-password");
+    }
 }

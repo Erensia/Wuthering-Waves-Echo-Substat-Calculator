@@ -54,4 +54,12 @@ public class UserAccount {
     public String getPassword() {
         return password;
     }
+
+    public void changePassword(String password) {
+        this.password = password;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
 }

@@ -9,5 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface LoadoutRepository extends JpaRepository<Loadout, UUID> {
 
     @EntityGraph(attributePaths = "echoes")
-    List<Loadout> findAllByUserIdOrderByCreatedAtDesc(UUID userId);
+    List<Loadout> findAllByUserIdOrderByScoreDescNameAscCreatedAtDesc(UUID userId);
+
+    long deleteByIdAndUserId(UUID id, UUID userId);
 }
