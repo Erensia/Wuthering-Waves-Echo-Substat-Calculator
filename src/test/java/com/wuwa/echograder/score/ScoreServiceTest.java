@@ -20,6 +20,13 @@ class ScoreServiceTest {
         assertThat(result.score()).isEqualByComparingTo("209.6");
         assertThat(result.grade()).isEqualTo(Grade.COMPLETE);
         assertThat(result.pointsToNextGrade()).isEqualByComparingTo("20.4");
+        assertThat(result.echoScores()).extracting(EchoScoreResult::cost)
+                .containsExactly(
+                        EchoCost.COST_4,
+                        EchoCost.COST_3,
+                        EchoCost.COST_3,
+                        EchoCost.COST_1,
+                        EchoCost.COST_1);
     }
 
     @Test
@@ -81,15 +88,15 @@ class ScoreServiceTest {
     }
 
     private EchoInput echo(String critRate, String critDamage) {
-        return new EchoInput(new BigDecimal(critRate), new BigDecimal(critDamage));
+        return new EchoInput(EchoCost.COST_4, new BigDecimal(critRate), new BigDecimal(critDamage));
     }
 
     private ScoreRequest requestWithTotals(String critRate, String critDamage, MainStat mainStat) {
         return new ScoreRequest(mainStat, List.of(
-                new EchoInput(new BigDecimal(critRate), new BigDecimal(critDamage)),
-                new EchoInput(BigDecimal.ZERO, BigDecimal.ZERO),
-                new EchoInput(BigDecimal.ZERO, BigDecimal.ZERO),
-                new EchoInput(BigDecimal.ZERO, BigDecimal.ZERO),
-                new EchoInput(BigDecimal.ZERO, BigDecimal.ZERO)));
+                new EchoInput(EchoCost.COST_4, new BigDecimal(critRate), new BigDecimal(critDamage)),
+                new EchoInput(EchoCost.COST_3, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_3, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_1, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_1, BigDecimal.ZERO, BigDecimal.ZERO)));
     }
 }

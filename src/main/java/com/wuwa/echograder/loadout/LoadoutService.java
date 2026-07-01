@@ -29,7 +29,11 @@ public class LoadoutService {
 
         for (int index = 0; index < request.scoreRequest().echoes().size(); index++) {
             EchoInput echo = request.scoreRequest().echoes().get(index);
-            loadout.addEcho(new EchoStat(index + 1, echo.critRate(), echo.critDamage()));
+            loadout.addEcho(new EchoStat(
+                    index + 1,
+                    echo.cost().getValue(),
+                    echo.critRate(),
+                    echo.critDamage()));
         }
 
         Loadout saved = repository.save(loadout);

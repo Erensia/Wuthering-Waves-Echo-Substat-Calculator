@@ -7,6 +7,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 
 public record EchoInput(
+        @NotNull EchoCost cost,
         @NotNull @DecimalMin("0.0") @DecimalMax("100.0") BigDecimal critRate,
         @NotNull @DecimalMin("0.0") @DecimalMax("200.0") BigDecimal critDamage) {
 }

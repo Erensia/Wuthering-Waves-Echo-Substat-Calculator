@@ -77,6 +77,17 @@ input[type="radio"] { accent-color: var(--accent); }
 }
 .echo-card label { position: relative; display: block; margin-top: 16px; }
 .echo-card label > span:first-child { display: block; margin-bottom: 7px; color: var(--muted); font-size: .8rem; }
+.echo-card select {
+    width: 100%;
+    padding: 11px;
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    outline: none;
+    background: #0d131a;
+    font: inherit;
+}
+.echo-card select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99, 226, 214, .12); }
 .input-wrap { display: flex; align-items: center; }
 .input-wrap input {
     width: 100%;

@@ -55,11 +55,11 @@ Flyway가 애플리케이션 시작 시 테이블을 생성합니다. 점수 계
 {
   "firstEchoMainStat": "CRIT_RATE",
   "echoes": [
-    {"critRate": 8.7, "critDamage": 17.4},
-    {"critRate": 9.3, "critDamage": 18.6},
-    {"critRate": 8.1, "critDamage": 15.0},
-    {"critRate": 7.5, "critDamage": 14.2},
-    {"critRate": 8.5, "critDamage": 16.2}
+    {"cost": "COST_4", "critRate": 8.7, "critDamage": 17.4},
+    {"cost": "COST_3", "critRate": 9.3, "critDamage": 18.6},
+    {"cost": "COST_3", "critRate": 8.1, "critDamage": 15.0},
+    {"cost": "COST_1", "critRate": 7.5, "critDamage": 14.2},
+    {"cost": "COST_1", "critRate": 8.5, "critDamage": 16.2}
   ]
 }
 ```

@@ -45,7 +45,13 @@ public class ScoreService {
                 .add(echo.critDamage())
                 .setScale(1, RoundingMode.HALF_UP);
         EchoGrade grade = EchoGrade.from(score);
-        return new EchoScoreResult(slotNumber, score, grade, grade.getLabel());
+        return new EchoScoreResult(
+                slotNumber,
+                echo.cost(),
+                echo.cost().getValue(),
+                score,
+                grade,
+                grade.getLabel());
     }
 
     private BigDecimal pointsToNextGrade(BigDecimal score) {

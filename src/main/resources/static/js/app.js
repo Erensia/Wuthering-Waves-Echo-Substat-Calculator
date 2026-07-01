@@ -5,12 +5,25 @@ const resultElement = document.querySelector("#result");
 const saveButton = document.querySelector("#save-button");
 const saveMessage = document.querySelector("#save-message");
 let lastRequest = null;
+const defaultCosts = ["COST_4", "COST_3", "COST_3", "COST_1", "COST_1"];
 
 for (let index = 1; index <= 5; index += 1) {
+    const costOptions = [
+        ["COST_4", "4코스트"],
+        ["COST_3", "3코스트"],
+        ["COST_1", "1코스트"]
+    ].map(([value, label]) =>
+        `<option value="${value}" ${defaultCosts[index - 1] === value ? "selected" : ""}>${label}</option>`
+    ).join("");
+
     echoGrid.insertAdjacentHTML("beforeend", `
         <article class="echo-card">
             <div class="echo-number">${index}</div>
             <h2>${index}번 에코</h2>
+            <label>
+                <span>에코 코스트</span>
+                <select name="cost-${index}" required>${costOptions}</select>
+            </label>
             <label>
                 <span>크리티컬</span>
                 <span class="input-wrap"><input name="critRate-${index}" type="number" min="0" max="100"
@@ -37,6 +50,7 @@ form.addEventListener("submit", async (event) => {
     const request = {
         firstEchoMainStat: data.get("mainStat"),
         echoes: Array.from({length: 5}, (_, index) => ({
+            cost: data.get(`cost-${index + 1}`),
             critRate: Number(data.get(`critRate-${index + 1}`)),
             critDamage: Number(data.get(`critDamage-${index + 1}`))
         }))
