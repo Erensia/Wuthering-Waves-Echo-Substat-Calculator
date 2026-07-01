@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.wuwa.echograder.auth.UserAccount;
 import com.wuwa.echograder.score.Grade;
 import com.wuwa.echograder.score.MainStat;
 
@@ -15,6 +16,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -43,13 +47,23 @@ public class Loadout {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private UserAccount user;
+
     @OneToMany(mappedBy = "loadout", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EchoStat> echoes = new ArrayList<>();
 
     protected Loadout() {
     }
 
-    public Loadout(String name, MainStat firstEchoMainStat, BigDecimal score, Grade grade) {
+    public Loadout(
+            UserAccount user,
+            String name,
+            MainStat firstEchoMainStat,
+            BigDecimal score,
+            Grade grade) {
+        this.user = user;
         this.name = name;
         this.firstEchoMainStat = firstEchoMainStat;
         this.score = score;
@@ -81,5 +95,21 @@ public class Loadout {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public MainStat getFirstEchoMainStat() {
+        return firstEchoMainStat;
+    }
+
+    public BigDecimal getScore() {
+        return score;
+    }
+
+    public Grade getGrade() {
+        return grade;
+    }
+
+    public List<EchoStat> getEchoes() {
+        return echoes;
     }
 }

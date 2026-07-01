@@ -1,5 +1,8 @@
 package com.wuwa.echograder.loadout;
 
+import java.util.List;
+
+import com.wuwa.echograder.auth.UserAccount;
 import com.wuwa.echograder.score.EchoInput;
 import com.wuwa.echograder.score.ScoreResult;
 import com.wuwa.echograder.score.ScoreService;
@@ -19,9 +22,10 @@ public class LoadoutService {
     }
 
     @Transactional
-    public SavedLoadoutResult save(SaveLoadoutRequest request) {
+    public SavedLoadoutResult save(SaveLoadoutRequest request, UserAccount user) {
         ScoreResult result = scoreService.calculate(request.scoreRequest());
         Loadout loadout = new Loadout(
+                user,
                 normalizeName(request.name()),
                 request.scoreRequest().firstEchoMainStat(),
                 result.score(),
@@ -38,6 +42,13 @@ public class LoadoutService {
 
         Loadout saved = repository.save(loadout);
         return new SavedLoadoutResult(saved.getId(), saved.getName(), saved.getCreatedAt(), result);
+    }
+
+    @Transactional(readOnly = true)
+    public List<LoadoutResult> findAll(UserAccount user) {
+        return repository.findAllByUserIdOrderByCreatedAtDesc(user.getId()).stream()
+                .map(LoadoutResult::from)
+                .toList();
     }
 
     private String normalizeName(String name) {
