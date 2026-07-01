@@ -15,6 +15,10 @@ for (let index = 1; index <= 5; index += 1) {
     ].map(([value, label]) =>
         `<option value="${value}" ${defaultCosts[index - 1] === value ? "selected" : ""}>${label}</option>`
     ).join("");
+    const costControl = index === 1
+        ? `<input type="hidden" name="cost-1" value="COST_4">
+           <span class="fixed-cost">4코스트 <small>고정</small></span>`
+        : `<select name="cost-${index}" required>${costOptions}</select>`;
 
     echoGrid.insertAdjacentHTML("beforeend", `
         <article class="echo-card">
@@ -22,7 +26,7 @@ for (let index = 1; index <= 5; index += 1) {
             <h2>${index}번 에코</h2>
             <label>
                 <span>에코 코스트</span>
-                <select name="cost-${index}" required>${costOptions}</select>
+                ${costControl}
             </label>
             <label>
                 <span>크리티컬</span>

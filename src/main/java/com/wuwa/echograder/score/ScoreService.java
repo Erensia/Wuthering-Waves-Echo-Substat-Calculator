@@ -13,6 +13,10 @@ public class ScoreService {
     private static final BigDecimal TWO = new BigDecimal("2");
 
     public ScoreResult calculate(ScoreRequest request) {
+        if (!request.isFirstEchoFourCost()) {
+            throw new IllegalArgumentException("1번 에코는 4코스트여야 합니다.");
+        }
+
         BigDecimal totalCritRate = request.echoes().stream()
                 .map(EchoInput::critRate)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);

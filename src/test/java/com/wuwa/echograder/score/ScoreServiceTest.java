@@ -1,6 +1,7 @@
 package com.wuwa.echograder.score;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -85,6 +86,21 @@ class ScoreServiceTest {
                         EchoGrade.NEED_REBUILD,
                         EchoGrade.EXTREME,
                         EchoGrade.COMPLETE);
+    }
+
+    @Test
+    void rejectsNonFourCostFirstEcho() {
+        ScoreRequest request = new ScoreRequest(MainStat.CRIT_RATE, List.of(
+                new EchoInput(EchoCost.COST_3, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_3, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_3, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_1, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_1, BigDecimal.ZERO, BigDecimal.ZERO)));
+
+        assertThat(request.isFirstEchoFourCost()).isFalse();
+        assertThatThrownBy(() -> scoreService.calculate(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("1번 에코는 4코스트여야 합니다.");
     }
 
     private EchoInput echo(String critRate, String critDamage) {
