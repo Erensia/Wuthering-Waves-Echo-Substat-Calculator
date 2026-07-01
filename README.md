@@ -1,3 +1,5 @@
+codex 바이브 코딩 연습용
+
 # 명조 에코 스코어
 
 Spring Boot와 PostgreSQL로 만든 명조 에코 점수 계산기입니다.
