@@ -1,3 +1,5 @@
+codex 바이브 코딩 연습용
+
 # 명조 에코 점수 계산기
 
 Spring Boot와 PostgreSQL로 만든 에코 점수 계산기입니다. 별도의 Node.js 설치가 필요하지 않습니다.
