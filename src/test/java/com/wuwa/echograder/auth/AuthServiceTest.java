@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,29 +22,35 @@ class AuthServiceTest {
     @Mock
     private UserAccountRepository repository;
 
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(4);
+
     @Test
-    void signupStoresPlainPasswordAndSignsUserIn() {
-        AuthService service = new AuthService(repository);
+    void signupStoresHashedPasswordAndSignsUserIn() {
+        AuthService service = new AuthService(repository, passwordEncoder);
         MockHttpSession session = new MockHttpSession();
-        UserAccount saved = new UserAccount("tester", "plain-password");
-        saved.onCreate();
 
         when(repository.existsByUsername("tester")).thenReturn(false);
-        when(repository.saveAndFlush(org.mockito.ArgumentMatchers.any(UserAccount.class))).thenReturn(saved);
+        when(repository.saveAndFlush(org.mockito.ArgumentMatchers.any(UserAccount.class)))
+                .thenAnswer(invocation -> {
+                    UserAccount user = invocation.getArgument(0);
+                    user.onCreate();
+                    return user;
+                });
 
         AuthResult result = service.signup(new AuthRequest("Tester", "plain-password"), session);
 
         assertThat(result.username()).isEqualTo("tester");
-        assertThat(session.getAttribute(AuthService.USER_ID_SESSION_KEY)).isEqualTo(saved.getId());
+        assertThat(session.getAttribute(AuthService.USER_ID_SESSION_KEY)).isNotNull();
         verify(repository).saveAndFlush(org.mockito.ArgumentMatchers.argThat(user ->
                 user.getUsername().equals("tester")
-                        && user.getPassword().equals("plain-password")));
+                        && !user.getPasswordHash().equals("plain-password")
+                        && passwordEncoder.matches("plain-password", user.getPasswordHash())));
     }
 
     @Test
     void loginRejectsWrongPassword() {
-        AuthService service = new AuthService(repository);
-        UserAccount user = new UserAccount("tester", "correct-password");
+        AuthService service = new AuthService(repository, passwordEncoder);
+        UserAccount user = new UserAccount("tester", passwordEncoder.encode("correct-password"));
         user.onCreate();
         when(repository.findByUsername("tester")).thenReturn(Optional.of(user));
 
@@ -53,10 +61,26 @@ class AuthServiceTest {
     }
 
     @Test
-    void changePasswordUpdatesSignedInUsersPassword() {
-        AuthService service = new AuthService(repository);
+    void loginAcceptsCorrectPassword() {
+        AuthService service = new AuthService(repository, passwordEncoder);
+        UserAccount user = new UserAccount("tester", passwordEncoder.encode("correct-password"));
+        user.onCreate();
+        when(repository.findByUsername("tester")).thenReturn(Optional.of(user));
         MockHttpSession session = new MockHttpSession();
-        UserAccount user = new UserAccount("tester", "old-password");
+
+        AuthResult result = service.login(
+                new AuthRequest("tester", "correct-password"),
+                session);
+
+        assertThat(result.username()).isEqualTo("tester");
+        assertThat(session.getAttribute(AuthService.USER_ID_SESSION_KEY)).isEqualTo(user.getId());
+    }
+
+    @Test
+    void changePasswordUpdatesSignedInUsersPassword() {
+        AuthService service = new AuthService(repository, passwordEncoder);
+        MockHttpSession session = new MockHttpSession();
+        UserAccount user = new UserAccount("tester", passwordEncoder.encode("old-password"));
         user.onCreate();
         session.setAttribute(AuthService.USER_ID_SESSION_KEY, user.getId());
         when(repository.findById(user.getId())).thenReturn(Optional.of(user));
@@ -65,14 +89,16 @@ class AuthServiceTest {
                 new PasswordChangeRequest("old-password", "new-password"),
                 session);
 
-        assertThat(user.getPassword()).isEqualTo("new-password");
+        assertThat(user.getPasswordHash()).isNotEqualTo("new-password");
+        assertThat(passwordEncoder.matches("new-password", user.getPasswordHash())).isTrue();
     }
 
     @Test
     void changePasswordRejectsWrongCurrentPassword() {
-        AuthService service = new AuthService(repository);
+        AuthService service = new AuthService(repository, passwordEncoder);
         MockHttpSession session = new MockHttpSession();
-        UserAccount user = new UserAccount("tester", "correct-password");
+        String originalPasswordHash = passwordEncoder.encode("correct-password");
+        UserAccount user = new UserAccount("tester", originalPasswordHash);
         user.onCreate();
         session.setAttribute(AuthService.USER_ID_SESSION_KEY, user.getId());
         when(repository.findById(user.getId())).thenReturn(Optional.of(user));
@@ -82,6 +108,6 @@ class AuthServiceTest {
                 session))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("401 UNAUTHORIZED");
-        assertThat(user.getPassword()).isEqualTo("correct-password");
+        assertThat(user.getPasswordHash()).isEqualTo(originalPasswordHash);
     }
 }

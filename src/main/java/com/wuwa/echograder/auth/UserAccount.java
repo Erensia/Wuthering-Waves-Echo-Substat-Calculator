@@ -19,8 +19,8 @@ public class UserAccount {
     @Column(nullable = false, unique = true, length = 30)
     private String username;
 
-    @Column(nullable = false, length = 100)
-    private String password;
+    @Column(name = "password", nullable = false, length = 100)
+    private String passwordHash;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -28,9 +28,9 @@ public class UserAccount {
     protected UserAccount() {
     }
 
-    public UserAccount(String username, String password) {
+    public UserAccount(String username, String passwordHash) {
         this.username = username;
-        this.password = password;
+        this.passwordHash = passwordHash;
     }
 
     @PrePersist
@@ -51,12 +51,12 @@ public class UserAccount {
         return username;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void changePassword(String password) {
-        this.password = password;
+    public void changePasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public Instant getCreatedAt() {

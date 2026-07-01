@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpSession;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -17,9 +18,11 @@ public class AuthService {
     public static final String USER_ID_SESSION_KEY = "userId";
 
     private final UserAccountRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserAccountRepository repository) {
+    public AuthService(UserAccountRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -30,7 +33,8 @@ public class AuthService {
         }
 
         try {
-            UserAccount user = repository.saveAndFlush(new UserAccount(username, request.password()));
+            String passwordHash = passwordEncoder.encode(request.password());
+            UserAccount user = repository.saveAndFlush(new UserAccount(username, passwordHash));
             signIn(session, user);
             return AuthResult.from(user);
         } catch (DataIntegrityViolationException exception) {
@@ -41,7 +45,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResult login(AuthRequest request, HttpSession session) {
         UserAccount user = repository.findByUsername(normalizeUsername(request.username()))
-                .filter(candidate -> candidate.getPassword().equals(request.password()))
+                .filter(candidate -> passwordEncoder.matches(request.password(), candidate.getPasswordHash()))
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED,
                         "아이디 또는 비밀번호가 올바르지 않습니다."));
@@ -70,13 +74,13 @@ public class AuthService {
     @Transactional
     public void changePassword(PasswordChangeRequest request, HttpSession session) {
         UserAccount user = requireUser(session);
-        if (!user.getPassword().equals(request.currentPassword())) {
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "현재 비밀번호가 올바르지 않습니다.");
         }
-        if (user.getPassword().equals(request.newPassword())) {
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "새 비밀번호는 현재 비밀번호와 달라야 합니다.");
         }
-        user.changePassword(request.newPassword());
+        user.changePasswordHash(passwordEncoder.encode(request.newPassword()));
     }
 
     public void logout(HttpSession session) {
