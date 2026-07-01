@@ -3,52 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>명조 에코 점수 계산기</title>
+    <title>명조 에코 스코어</title>
     <link rel="stylesheet" th:href="@{/css/app.css}" href="/css/app.css">
 </head>
 <body>
 <main class="container">
-    <header>
-        <p class="eyebrow">WUTHERING WAVES</p>
-        <h1>에코 점수 계산기</h1>
-        <p class="description">다섯 에코의 크리티컬 부옵션을 입력하면 세팅 등급을 계산합니다.</p>
+    <header class="page-header">
+        <div>
+            <p class="eyebrow">WUTHERING WAVES</p>
+            <h1>명조 에코 스코어</h1>
+            <p class="description">치명타 부옵션을 입력하고 에코 세트의 완성도를 확인하세요.</p>
+        </div>
+        <section class="account-panel" aria-label="회원 메뉴">
+            <form id="auth-form">
+                <div class="account-heading">
+                    <div>
+                        <p class="section-kicker">MY ACCOUNT</p>
+                        <h2>로그인 또는 회원가입</h2>
+                    </div>
+                </div>
+                <div class="auth-fields">
+                    <label>
+                        <span>아이디</span>
+                        <input id="username" name="username" type="text" minlength="3" maxlength="30"
+                               autocomplete="username" placeholder="한글, 영문, 숫자, 밑줄" required>
+                    </label>
+                    <label>
+                        <span>비밀번호</span>
+                        <input id="password" name="password" type="password" minlength="4" maxlength="100"
+                               autocomplete="current-password" placeholder="4자 이상" required>
+                    </label>
+                </div>
+                <div class="auth-actions">
+                    <button class="primary-small" type="submit">로그인</button>
+                    <button class="secondary-small" id="signup-button" type="button">회원가입</button>
+                </div>
+                <p class="form-message" id="auth-message" role="alert"></p>
+            </form>
+            <div class="signed-in hidden" id="signed-in">
+                <div>
+                    <p class="section-kicker">SIGNED IN</p>
+                    <p><strong id="current-username"></strong>님의 에코 보관함</p>
+                </div>
+                <button class="secondary-small" id="logout-button" type="button">로그아웃</button>
+            </div>
+        </section>
     </header>
 
     <form id="score-form">
         <section class="main-stat-panel">
-            <h2>1번 에코 주옵션</h2>
-            <div class="main-stat-options">
-                <label><input type="radio" name="mainStat" value="CRIT_RATE" checked> 크리티컬 22.0%</label>
-                <label><input type="radio" name="mainStat" value="CRIT_DAMAGE"> 크리티컬 피해 44.0%</label>
+            <div>
+                <p class="section-kicker">MAIN OPTION</p>
+                <h2>1번 에코 주옵션</h2>
             </div>
-            <small>두 주옵션 모두 점수 환산 시 44점입니다.</small>
+            <div class="main-stat-options">
+                <label><input type="radio" name="mainStat" value="CRIT_RATE" checked> 치명타 확률 22.0%</label>
+                <label><input type="radio" name="mainStat" value="CRIT_DAMAGE"> 치명타 피해 44.0%</label>
+            </div>
+            <small>주옵션은 환산 점수 44점으로 동일하게 반영됩니다.</small>
         </section>
 
-        <p class="echo-grade-guide">
-            개별 에코 등급 · 극종결 37.8+ · 종결 33.6+ · 준종결 29.4+ · 그 미만 다시 파밍 필요
-        </p>
+        <div class="echo-guide-row">
+            <p class="echo-grade-guide">극종결 37.8+ · 종결 33.6+ · 준종결 29.4+ · 그 외 재세팅 필요</p>
+            <p class="cost-total" id="cost-total">에코 코스트 <strong id="total-cost">12</strong> / 12</p>
+        </div>
         <section class="echo-grid" id="echo-grid"></section>
 
         <label class="loadout-name">
-            <span>세팅 이름 <small>(저장할 때만 사용, 선택)</small></span>
-            <input id="loadout-name" type="text" maxlength="100" placeholder="예: 금희 회절 세팅">
+            <span>세트 이름 <small>(선택 사항, 최대 100자)</small></span>
+            <input id="loadout-name" type="text" maxlength="100" placeholder="예: 금희 회절 세트">
         </label>
-        <button class="calculate-button" type="submit">점수 계산하기</button>
-        <button class="save-button" id="save-button" type="button">PostgreSQL에 결과 저장</button>
+        <div class="main-actions">
+            <button class="calculate-button" type="submit">점수 계산하기</button>
+            <button class="save-button" id="save-button" type="button">내 계정에 저장</button>
+        </div>
+        <p class="login-hint" id="login-hint">저장하려면 로그인 또는 회원가입이 필요합니다.</p>
         <p class="error" id="error" role="alert"></p>
         <p class="save-message" id="save-message" role="status"></p>
     </form>
 
     <section class="result hidden" id="result" aria-live="polite">
-        <p class="result-label">총점</p>
+        <p class="result-label">에코 세트 총점</p>
         <div><strong id="score">0.0</strong><span>점</span></div>
         <p class="grade" id="grade"></p>
         <dl>
-            <div><dt>크리티컬 합계</dt><dd id="total-crit-rate"></dd></div>
-            <div><dt>크리티컬 피해 합계</dt><dd id="total-crit-damage"></dd></div>
+            <div><dt>치명타 확률 합계</dt><dd id="total-crit-rate"></dd></div>
+            <div><dt>치명타 피해 합계</dt><dd id="total-crit-damage"></dd></div>
             <div><dt>1번 주옵션 점수</dt><dd id="main-stat-score"></dd></div>
             <div id="next-grade-row"><dt>다음 등급까지</dt><dd id="next-grade"></dd></div>
         </dl>
+    </section>
+
+    <section class="saved-section hidden" id="saved-section">
+        <div class="saved-header">
+            <div>
+                <p class="section-kicker">MY LOADOUTS</p>
+                <h2>저장한 에코 세트</h2>
+            </div>
+            <button class="secondary-small" id="refresh-loadouts" type="button">새로고침</button>
+        </div>
+        <div class="saved-grid" id="saved-grid"></div>
+        <p class="empty-state hidden" id="empty-state">아직 저장한 세트가 없습니다. 첫 세트를 계산해 저장해보세요.</p>
+    </section>
+
+    <section class="member-section" id="member-section">
+        <div>
+            <p class="section-kicker">MEMBER SEARCH</p>
+            <h2>회원 찾기</h2>
+        </div>
+        <form class="member-search-form" id="member-search-form">
+            <label for="member-query">회원 아이디</label>
+            <div>
+                <input id="member-query" type="search" minlength="1" maxlength="30"
+                       placeholder="아이디 일부를 입력하세요" required>
+                <button class="primary-small" type="submit">검색</button>
+            </div>
+        </form>
+        <p class="member-search-message" id="member-search-message" role="status"></p>
+        <div class="member-results" id="member-results"></div>
+        <form class="password-change-panel hidden" id="password-change-form">
+            <div class="password-change-heading">
+                <div>
+                    <p class="section-kicker">SECURITY</p>
+                    <h3><span id="password-change-username"></span> 비밀번호 변경</h3>
+                </div>
+                <button class="secondary-small" id="cancel-password-change" type="button">취소</button>
+            </div>
+            <div class="password-fields">
+                <label>
+                    <span>현재 비밀번호</span>
+                    <input id="current-password" type="password" minlength="4" maxlength="100"
+                           autocomplete="current-password" required>
+                </label>
+                <label>
+                    <span>새 비밀번호</span>
+                    <input id="new-password" type="password" minlength="4" maxlength="100"
+                           autocomplete="new-password" required>
+                </label>
+            </div>
+            <button class="primary-small" type="submit">변경하기</button>
+            <p class="password-change-message" id="password-change-message" role="status"></p>
+        </form>
     </section>
 </main>
 <script th:src="@{/js/app.js}" src="/js/app.js"></script>

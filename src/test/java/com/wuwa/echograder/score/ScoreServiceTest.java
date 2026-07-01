@@ -45,11 +45,11 @@ class ScoreServiceTest {
     @Test
     void calculatesAndGradesEachEchoUsingEqualIntervals() {
         ScoreRequest request = new ScoreRequest(MainStat.CRIT_RATE, List.of(
-                echo("10.5", "21.0"),
-                echo("8.4", "21.0"),
-                echo("6.3", "21.0"),
-                echo("4.2", "21.0"),
-                echo("6.3", "12.6")));
+                echo(EchoCost.COST_4, "10.5", "21.0"),
+                echo(EchoCost.COST_3, "8.4", "21.0"),
+                echo(EchoCost.COST_3, "6.3", "21.0"),
+                echo(EchoCost.COST_1, "4.2", "21.0"),
+                echo(EchoCost.COST_1, "6.3", "12.6")));
 
         List<EchoScoreResult> echoes = scoreService.calculate(request).echoScores();
 
@@ -72,11 +72,11 @@ class ScoreServiceTest {
     @Test
     void appliesIndividualEchoGradeBoundaries() {
         ScoreRequest request = new ScoreRequest(MainStat.CRIT_DAMAGE, List.of(
-                echo("0", "37.7"),
-                echo("0", "33.5"),
-                echo("0", "29.3"),
-                echo("0", "37.8"),
-                echo("0", "33.6")));
+                echo(EchoCost.COST_4, "0", "37.7"),
+                echo(EchoCost.COST_3, "0", "33.5"),
+                echo(EchoCost.COST_3, "0", "29.3"),
+                echo(EchoCost.COST_1, "0", "37.8"),
+                echo(EchoCost.COST_1, "0", "33.6")));
 
         assertThat(scoreService.calculate(request).echoScores())
                 .extracting(EchoScoreResult::grade)
@@ -103,8 +103,23 @@ class ScoreServiceTest {
                 .hasMessage("1번 에코는 4코스트여야 합니다.");
     }
 
-    private EchoInput echo(String critRate, String critDamage) {
-        return new EchoInput(EchoCost.COST_4, new BigDecimal(critRate), new BigDecimal(critDamage));
+    @Test
+    void rejectsTotalEchoCostAboveTwelve() {
+        ScoreRequest request = new ScoreRequest(MainStat.CRIT_RATE, List.of(
+                new EchoInput(EchoCost.COST_4, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_4, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_3, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_1, BigDecimal.ZERO, BigDecimal.ZERO),
+                new EchoInput(EchoCost.COST_1, BigDecimal.ZERO, BigDecimal.ZERO)));
+
+        assertThat(request.isTotalCostWithinLimit()).isFalse();
+        assertThatThrownBy(() -> scoreService.calculate(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("에코 코스트 합계는 12 이하여야 합니다.");
+    }
+
+    private EchoInput echo(EchoCost cost, String critRate, String critDamage) {
+        return new EchoInput(cost, new BigDecimal(critRate), new BigDecimal(critDamage));
     }
 
     private ScoreRequest requestWithTotals(String critRate, String critDamage, MainStat mainStat) {

@@ -49,4 +49,20 @@ public class EchoStat {
     void assignTo(Loadout loadout) {
         this.loadout = loadout;
     }
+
+    public short getSlotNumber() {
+        return slotNumber;
+    }
+
+    public short getCost() {
+        return cost;
+    }
+
+    public BigDecimal getCritRate() {
+        return critRate;
+    }
+
+    public BigDecimal getCritDamage() {
+        return critDamage;
+    }
 }

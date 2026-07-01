@@ -16,6 +16,9 @@ public class ScoreService {
         if (!request.isFirstEchoFourCost()) {
             throw new IllegalArgumentException("1번 에코는 4코스트여야 합니다.");
         }
+        if (!request.isTotalCostWithinLimit()) {
+            throw new IllegalArgumentException("에코 코스트 합계는 12 이하여야 합니다.");
+        }
 
         BigDecimal totalCritRate = request.echoes().stream()
                 .map(EchoInput::critRate)

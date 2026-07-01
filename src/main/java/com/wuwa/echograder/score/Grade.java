@@ -6,7 +6,7 @@ public enum Grade {
     EXTREME("극종결"),
     COMPLETE("종결"),
     NEAR_COMPLETE("준종결"),
-    NEED_REBUILD("다시 맞출 필요 있음");
+    NEED_REBUILD("재세팅 필요");
 
     private final String label;
 

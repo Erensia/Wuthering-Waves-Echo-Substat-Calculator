@@ -6,7 +6,7 @@ public enum EchoGrade {
     EXTREME("극종결"),
     COMPLETE("종결"),
     NEAR_COMPLETE("준종결"),
-    NEED_REBUILD("다시 파밍 필요");
+    NEED_REBUILD("재세팅 필요");
 
     private static final BigDecimal EXTREME_THRESHOLD = new BigDecimal("37.8");
     private static final BigDecimal COMPLETE_THRESHOLD = new BigDecimal("33.6");

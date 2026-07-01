@@ -2,7 +2,7 @@ codex 바이브 코딩 연습용
 
 # 명조 에코 점수 계산기
 
-Spring Boot와 PostgreSQL로 만든 에코 점수 계산기입니다. 별도의 Node.js 설치가 필요하지 않습니다.
+Spring Boot와 PostgreSQL로 만든 명조 에코 점수 계산기입니다.
 
 ## 실행
 
@@ -11,26 +11,20 @@ Spring Boot와 PostgreSQL로 만든 에코 점수 계산기입니다. 별도의 
 - Java 21
 - PostgreSQL 17 또는 Docker Desktop
 
-Docker를 사용하는 경우:
-
 ```powershell
 docker compose up -d
 .\mvnw.cmd spring-boot:run
 ```
 
-STS에서는 `File > Import > Existing Maven Projects`로 이 폴더를 불러온 뒤
-`EchoGraderApplication`을 Spring Boot App으로 실행합니다.
+브라우저에서 `http://localhost:8080`을 엽니다.
 
-기본 접속 주소는 `http://localhost:8080`입니다.
+STS에서는 `File > Import > Existing Maven Projects`로 불러온 뒤
+`EchoGraderApplication`을 Spring Boot App으로 실행할 수 있습니다.
 
-## DB 접속 설정
+## DB 설정
 
-기본 URL은 `compose.yaml`과 동일합니다. DB 계정 정보는 저장소에 커밋하지 않습니다.
-다음 중 한 가지 방식으로 설정합니다.
-
-1. `application-local.properties.example`을 `application-local.properties`로 복사한 뒤 로컬 값을 입력합니다.
-   이 파일은 Git에서 제외됩니다.
-2. 환경 변수를 지정합니다.
+`application-local.properties.example`을 `application-local.properties`로 복사하거나
+다음 환경 변수를 설정합니다.
 
 ```powershell
 $env:DB_URL="jdbc:postgresql://localhost:5432/echo_grader"
@@ -38,31 +32,31 @@ $env:DB_USERNAME="echo_user"
 $env:DB_PASSWORD="echo_password"
 ```
 
-Flyway가 애플리케이션 시작 시 테이블을 생성합니다. 점수 계산은 DB와 독립적이고,
-화면의 저장 버튼 또는 `POST /api/v1/loadouts` API로 결과를 `loadout`, `echo_stat` 테이블에 저장합니다.
+Flyway가 실행 시점에 회원, 에코 세트, 에코 부옵션 테이블을 자동으로 구성합니다.
+기존 V1/V2 데이터는 삭제하지 않으며, 소유자가 없는 기존 세트는 회원별 목록에 노출되지 않습니다.
 
-## 계산 API
+## 회원과 저장 기능
 
-개별 에코는 주옵션을 제외하고 `크리티컬 × 2 + 크리티컬 피해`로 평가합니다.
-최저 기준 25.2점과 최고 42.0점 사이를 네 구간으로 균등 분할합니다.
-1번 에코는 크리티컬 계열 주옵션을 사용하는 4코스트로 고정하며, 2~5번 에코의 코스트는 화면에서 선택할 수 있습니다.
+- 회원가입 시 바로 로그인됩니다.
+- 로그인 상태는 서버 세션으로 유지됩니다.
+- 계산한 에코 세트를 현재 회원에게 귀속하여 저장합니다.
+- 저장 목록에서 슬롯별 코스트, 치명타 확률, 치명타 피해를 확인하고 계산기로 다시 불러올 수 있습니다.
 
-- 37.8점 이상: 극종결
-- 33.6점 이상: 종결
-- 29.4점 이상: 준종결
-- 29.4점 미만: 다시 파밍 필요
+비밀번호는 BCrypt 단방향 해시로 DB에 저장하며, 기존 평문 비밀번호도 Flyway 마이그레이션으로 변환합니다.
+외부 공개 전에는 CSRF 방어, 로그인 시도 제한, HTTPS 적용이 필요합니다.
 
-`POST /api/v1/scores/calculate`
+## API
 
-```json
-{
-  "firstEchoMainStat": "CRIT_RATE",
-  "echoes": [
-    {"cost": "COST_4", "critRate": 8.7, "critDamage": 17.4},
-    {"cost": "COST_3", "critRate": 9.3, "critDamage": 18.6},
-    {"cost": "COST_3", "critRate": 8.1, "critDamage": 15.0},
-    {"cost": "COST_1", "critRate": 7.5, "critDamage": 14.2},
-    {"cost": "COST_1", "critRate": 8.5, "critDamage": 16.2}
-  ]
-}
+- `POST /api/v1/auth/signup`: 회원가입
+- `POST /api/v1/auth/login`: 로그인
+- `POST /api/v1/auth/logout`: 로그아웃
+- `GET /api/v1/auth/me`: 현재 로그인 회원
+- `POST /api/v1/scores/calculate`: 에코 점수 계산
+- `POST /api/v1/loadouts`: 현재 회원의 세트 저장
+- `GET /api/v1/loadouts`: 현재 회원의 저장 세트 조회
+
+## 테스트
+
+```powershell
+.\mvnw.cmd test
 ```
