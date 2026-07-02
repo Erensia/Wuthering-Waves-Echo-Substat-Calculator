@@ -11,5 +11,5 @@ public record AuthRequest(
                 regexp = "^[\\p{L}\\p{N}_]+$",
                 message = "아이디는 한글, 영문, 숫자, 밑줄만 사용할 수 있습니다.")
         String username,
-        @NotBlank @Size(min = 4, max = 100) String password) {
+        @NotBlank @Size(min = 8, max = 100) String password) {
 }

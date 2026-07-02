@@ -29,6 +29,7 @@ const totalCost = document.querySelector("#total-cost");
 let currentUser = null;
 let lastRequest = null;
 let savedLoadouts = [];
+let csrfProtection = null;
 const defaultCosts = ["COST_4", "COST_3", "COST_3", "COST_1", "COST_1"];
 const maxTotalCost = 12;
 const critRateValues = [0, 6.3, 6.9, 7.5, 8.1, 8.7, 9.3, 9.9, 10.5];
@@ -105,6 +106,7 @@ logoutButton.addEventListener("click", async () => {
     try {
         await api("/api/v1/auth/logout", {method: "POST"}, true);
     } finally {
+        csrfProtection = null;
         currentUser = null;
         savedLoadouts = [];
         authForm.reset();
@@ -487,9 +489,20 @@ function resetCalculator() {
     });
 }
 
-async function api(url, options = {}, allowEmpty = false) {
+async function api(url, options = {}, allowEmpty = false, csrfRetried = false) {
+    const method = (options.method || "GET").toUpperCase();
+    const requiresCsrf = !["GET", "HEAD", "OPTIONS", "TRACE"].includes(method);
     const headers = options.body ? {"Content-Type": "application/json"} : {};
+    if (requiresCsrf) {
+        const csrf = await getCsrfProtection();
+        headers[csrf.headerName] = csrf.token;
+    }
+
     const response = await fetch(url, {...options, headers: {...headers, ...options.headers}});
+    if (response.status === 403 && requiresCsrf && !csrfRetried) {
+        csrfProtection = null;
+        return api(url, options, allowEmpty, true);
+    }
     if (!response.ok) {
         let message = "요청을 처리하지 못했습니다.";
         try {
@@ -509,6 +522,22 @@ async function api(url, options = {}, allowEmpty = false) {
         return null;
     }
     return response.json();
+}
+
+async function getCsrfProtection() {
+    if (csrfProtection) {
+        return csrfProtection;
+    }
+
+    const response = await fetch("/api/v1/csrf", {
+        method: "GET",
+        headers: {"Accept": "application/json"}
+    });
+    if (!response.ok) {
+        throw new Error("보안 토큰을 발급받지 못했습니다. 페이지를 새로고침해 주세요.");
+    }
+    csrfProtection = await response.json();
+    return csrfProtection;
 }
 
 function formatDate(value) {

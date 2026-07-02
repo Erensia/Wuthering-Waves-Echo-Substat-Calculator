@@ -5,6 +5,7 @@ import com.wuwa.echograder.auth.AuthResult;
 import com.wuwa.echograder.auth.AuthService;
 import com.wuwa.echograder.auth.PasswordChangeRequest;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
@@ -29,13 +30,23 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResult signup(@Valid @RequestBody AuthRequest request, HttpSession session) {
-        return authService.signup(request, session);
+    public AuthResult signup(
+            @Valid @RequestBody AuthRequest request,
+            HttpServletRequest httpRequest,
+            HttpSession session) {
+        AuthResult result = authService.signup(request, session);
+        httpRequest.changeSessionId();
+        return result;
     }
 
     @PostMapping("/login")
-    public AuthResult login(@Valid @RequestBody AuthRequest request, HttpSession session) {
-        return authService.login(request, session);
+    public AuthResult login(
+            @Valid @RequestBody AuthRequest request,
+            HttpServletRequest httpRequest,
+            HttpSession session) {
+        AuthResult result = authService.login(request, session);
+        httpRequest.changeSessionId();
+        return result;
     }
 
     @PostMapping("/logout")

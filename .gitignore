@@ -34,3 +34,4 @@ build/
 
 ### Local secrets ###
 /application-local.properties
+*.log
