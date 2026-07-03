@@ -23,6 +23,9 @@ const passwordChangeForm = document.querySelector("#password-change-form");
 const passwordChangeUsername = document.querySelector("#password-change-username");
 const passwordChangeMessage = document.querySelector("#password-change-message");
 const cancelPasswordChange = document.querySelector("#cancel-password-change");
+const openPasswordChangeButton = document.querySelector("#open-password-change");
+const characterChart = document.querySelector("#character-chart");
+const dashboardMessage = document.querySelector("#dashboard-message");
 const costTotal = document.querySelector("#cost-total");
 const totalCost = document.querySelector("#total-cost");
 
@@ -37,6 +40,7 @@ const critDamageValues = [0, 12.6, 13.8, 15, 16.2, 17.4, 18.6, 19.8, 21];
 
 buildEchoInputs();
 updateCostUi();
+loadCharacterDashboard();
 restoreSession();
 
 scoreForm.addEventListener("submit", async (event) => {
@@ -83,6 +87,7 @@ saveButton.addEventListener("click", async () => {
         });
         saveMessage.textContent = `"${saved.name || "이름 없는 세트"}" 저장 완료`;
         await loadSavedLoadouts();
+        await loadCharacterDashboard();
     } catch (error) {
         errorElement.textContent = error.message;
     } finally {
@@ -142,13 +147,10 @@ memberResults.addEventListener("click", (event) => {
     if (!button || !currentUser) {
         return;
     }
-    passwordChangeForm.reset();
-    passwordChangeMessage.textContent = "";
-    passwordChangeUsername.textContent = currentUser.username;
-    passwordChangeForm.classList.remove("hidden");
-    document.querySelector("#current-password").focus();
+    openPasswordChange();
 });
 
+openPasswordChangeButton.addEventListener("click", openPasswordChange);
 cancelPasswordChange.addEventListener("click", closePasswordChange);
 
 passwordChangeForm.addEventListener("submit", async (event) => {
@@ -388,6 +390,7 @@ async function deleteLoadout(button) {
         await api(`/api/v1/loadouts/${loadout.id}`, {method: "DELETE"}, true);
         savedLoadouts = savedLoadouts.filter((item) => item.id !== loadout.id);
         renderSavedLoadouts();
+        await loadCharacterDashboard();
         saveMessage.textContent = `"${name}" 프리셋을 삭제했습니다.`;
     } catch (error) {
         button.disabled = false;
@@ -422,10 +425,68 @@ function renderMemberResults(users) {
     }).join("");
 }
 
+async function loadCharacterDashboard() {
+    dashboardMessage.textContent = "대시보드를 불러오는 중입니다.";
+    try {
+        const characters = await api("/api/v1/dashboard/characters");
+        renderCharacterDashboard(characters);
+    } catch (error) {
+        characterChart.innerHTML = "";
+        dashboardMessage.textContent = error.message;
+    }
+}
+
+function renderCharacterDashboard(characters) {
+    if (characters.length === 0) {
+        characterChart.innerHTML = "";
+        dashboardMessage.textContent = "캐릭터 이름으로 저장된 세트가 아직 없습니다.";
+        return;
+    }
+
+    characterChart.innerHTML = characters.map((character) => {
+        const score = Number(character.bestScore);
+        const barValue = Math.min(Math.max(score, 0), 250);
+        const countLabel = character.loadoutCount > 1 ? ` · ${character.loadoutCount}개 중 최고` : "";
+        return `
+            <article class="character-chart-row">
+                <div class="character-chart-label">
+                    <strong>${escapeHtml(character.characterName)}</strong>
+                    <span>${escapeHtml(character.gradeLabel)}${countLabel}</span>
+                </div>
+                <div class="character-chart-track"
+                     role="progressbar"
+                     aria-label="${escapeHtml(character.characterName)} 최고 점수"
+                     aria-valuemin="0"
+                     aria-valuemax="250"
+                     aria-valuenow="${score.toFixed(1)}">
+                    <svg class="character-chart-bar" data-grade="${character.grade}"
+                         viewBox="0 0 250 34" preserveAspectRatio="none" aria-hidden="true">
+                        <rect width="${barValue.toFixed(1)}" height="34"></rect>
+                    </svg>
+                    <span class="complete-threshold" aria-hidden="true"></span>
+                    <strong class="character-chart-score">${score.toFixed(1)}</strong>
+                </div>
+            </article>
+        `;
+    }).join("");
+    dashboardMessage.textContent = `총 ${characters.length}명의 캐릭터 최고 기록입니다.`;
+}
+
 function closePasswordChange() {
     passwordChangeForm.reset();
     passwordChangeMessage.textContent = "";
     passwordChangeForm.classList.add("hidden");
+}
+
+function openPasswordChange() {
+    if (!currentUser) {
+        return;
+    }
+    passwordChangeForm.reset();
+    passwordChangeMessage.textContent = "";
+    passwordChangeUsername.textContent = currentUser.username;
+    passwordChangeForm.classList.remove("hidden");
+    document.querySelector("#current-password").focus();
 }
 
 function updateAccountUi() {

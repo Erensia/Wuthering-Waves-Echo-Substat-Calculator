@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import com.wuwa.echograder.auth.UserAccount;
@@ -49,5 +51,37 @@ class LoadoutServiceTest {
         boolean deleted = new LoadoutService(repository, scoreService).delete(loadoutId, user);
 
         assertThat(deleted).isFalse();
+    }
+
+    @Test
+    void mapsCharacterBestScoresToDashboardResults() {
+        CharacterScoreSummary summary = new CharacterScoreSummary() {
+            @Override
+            public String getCharacterName() {
+                return "금희";
+            }
+
+            @Override
+            public BigDecimal getBestScore() {
+                return new BigDecimal("226.4");
+            }
+
+            @Override
+            public long getLoadoutCount() {
+                return 2;
+            }
+        };
+        when(repository.findCharacterScoreSummaries()).thenReturn(List.of(summary));
+
+        List<CharacterScoreResult> result =
+                new LoadoutService(repository, scoreService).findCharacterScores();
+
+        assertThat(result).singleElement().satisfies(character -> {
+            assertThat(character.characterName()).isEqualTo("금희");
+            assertThat(character.bestScore()).isEqualByComparingTo("226.4");
+            assertThat(character.grade().name()).isEqualTo("COMPLETE");
+            assertThat(character.gradeLabel()).isEqualTo("종결");
+            assertThat(character.loadoutCount()).isEqualTo(2);
+        });
     }
 }

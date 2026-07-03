@@ -52,6 +52,13 @@ public class LoadoutService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<CharacterScoreResult> findCharacterScores() {
+        return repository.findCharacterScoreSummaries().stream()
+                .map(CharacterScoreResult::from)
+                .toList();
+    }
+
     @Transactional
     public boolean delete(UUID id, UserAccount user) {
         return repository.deleteByIdAndUserId(id, user.getId()) > 0;

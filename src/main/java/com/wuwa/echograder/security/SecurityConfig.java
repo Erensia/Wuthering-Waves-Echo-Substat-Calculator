@@ -54,7 +54,13 @@ public class SecurityConfig {
             RequestRateLimitFilter requestRateLimitFilter) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/error", "/css/**", "/js/**", "/api/v1/csrf").permitAll()
+                        .requestMatchers(
+                                "/",
+                                "/error",
+                                "/css/**",
+                                "/js/**",
+                                "/api/v1/csrf",
+                                "/api/v1/dashboard/**").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
