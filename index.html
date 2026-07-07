@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>명조 에코 부옵션 계산기</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="page-shell">
+    <header class="app-header">
+        <div>
+            <p class="eyebrow">WUTHERING WAVES</p>
+            <h1>에코 부옵션 계산기</h1>
+            <p class="description">
+                5개 에코의 치명타 부옵션과 1번 에코 주옵션을 합산해 세팅 점수를 계산합니다.
+                저장, 로그인, 서버 없이 브라우저에서 바로 동작합니다.
+            </p>
+        </div>
+        <aside class="score-rule" aria-label="계산식">
+            <span>계산식</span>
+            <strong>치확 x 2 + 치피 + 주옵션</strong>
+            <p>1번 에코는 4코스트 고정, 총 코스트는 12 이하입니다.</p>
+        </aside>
+    </header>
+
+    <form id="score-form" class="calculator">
+        <section class="toolbar" aria-labelledby="main-stat-title">
+            <div>
+                <p class="section-kicker">MAIN OPTION</p>
+                <h2 id="main-stat-title">1번 에코 주옵션</h2>
+            </div>
+            <fieldset class="main-stat-options">
+                <legend class="sr-only">1번 에코 주옵션 선택</legend>
+                <label>
+                    <input type="radio" name="mainStat" value="CRIT_RATE" checked>
+                    <span>치명타 확률 22.0%</span>
+                </label>
+                <label>
+                    <input type="radio" name="mainStat" value="CRIT_DAMAGE">
+                    <span>치명타 피해 44.0%</span>
+                </label>
+            </fieldset>
+            <div class="cost-pill" id="cost-total">
+                총 코스트 <strong id="total-cost">12</strong> / 12
+            </div>
+        </section>
+
+        <section class="echo-grid" id="echo-grid" aria-label="에코 부옵션 입력"></section>
+
+        <div class="actions">
+            <button class="primary-button" type="submit">계산하기</button>
+            <button class="secondary-button" id="reset-button" type="button">초기화</button>
+        </div>
+        <p class="error" id="error" role="alert"></p>
+    </form>
+
+    <section class="storage-panel" aria-labelledby="storage-title">
+        <div>
+            <p class="section-kicker">BACKUP</p>
+            <h2 id="storage-title">저장 / 복원</h2>
+        </div>
+        <div class="storage-actions">
+            <button class="secondary-button" id="export-csv-button" type="button">CSV 내보내기</button>
+            <button class="secondary-button" id="import-csv-button" type="button">CSV 가져오기</button>
+            <button class="secondary-button" id="export-json-button" type="button">JSON 백업</button>
+            <button class="secondary-button" id="import-json-button" type="button">JSON 복원</button>
+            <button class="secondary-button danger-button" id="clear-draft-button" type="button">임시 저장 삭제</button>
+        </div>
+        <input class="hidden" id="csv-file-input" type="file" accept=".csv,text/csv">
+        <input class="hidden" id="json-file-input" type="file" accept=".json,application/json">
+        <p class="storage-message" id="storage-message" role="status"></p>
+    </section>
+
+    <section class="result hidden" id="result" aria-live="polite">
+        <div class="result-score">
+            <span>총점</span>
+            <strong id="score">0.0</strong>
+            <p class="grade" id="grade"></p>
+        </div>
+        <dl class="result-breakdown">
+            <div>
+                <dt>치명타 확률 합계</dt>
+                <dd id="total-crit-rate">0.0%</dd>
+            </div>
+            <div>
+                <dt>치명타 피해 합계</dt>
+                <dd id="total-crit-damage">0.0%</dd>
+            </div>
+            <div>
+                <dt>주옵션 점수</dt>
+                <dd id="main-stat-score">44.0점</dd>
+            </div>
+            <div id="next-grade-row">
+                <dt>다음 등급까지</dt>
+                <dd id="next-grade">0.0점</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="guide" aria-labelledby="grade-guide-title">
+        <div>
+            <p class="section-kicker">GRADE GUIDE</p>
+            <h2 id="grade-guide-title">등급 기준</h2>
+        </div>
+        <div class="grade-grid">
+            <article>
+                <strong>극종결</strong>
+                <span>세팅 230점 이상</span>
+                <small>개별 에코 37.8점 이상</small>
+            </article>
+            <article>
+                <strong>종결</strong>
+                <span>세팅 200점 이상</span>
+                <small>개별 에코 33.6점 이상</small>
+            </article>
+            <article>
+                <strong>준종결</strong>
+                <span>세팅 170점 이상</span>
+                <small>개별 에코 29.4점 이상</small>
+            </article>
+            <article>
+                <strong>재파밍 권장</strong>
+                <span>세팅 170점 미만</span>
+                <small>개별 에코 29.4점 미만</small>
+            </article>
+        </div>
+    </section>
+</main>
+<script src="js/app.js"></script>
+</body>
+</html>

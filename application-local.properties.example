@@ -1,3 +1,0 @@
-spring.datasource.url=jdbc:postgresql://localhost:5433/echo_grader
-spring.datasource.username=echo_user
-spring.datasource.password=echo_password
