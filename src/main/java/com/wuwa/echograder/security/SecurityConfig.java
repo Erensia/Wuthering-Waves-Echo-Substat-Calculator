@@ -56,16 +56,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/",
+                                "/health",
                                 "/error",
                                 "/css/**",
                                 "/js/**",
-                                "/api/v1/csrf",
-                                "/api/v1/dashboard/**").permitAll()
+                                "/api/v1/csrf").permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/api/v1/scores/calculate").permitAll()
-                        .requestMatchers("/api/v1/auth/**", "/api/v1/loadouts/**", "/api/v1/users/**")
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/loadouts/**", "/api/v1/users/**",
+                                "/api/v1/dashboard/**")
                                 .authenticated()
                         .anyRequest().denyAll())
                 .csrf(Customizer.withDefaults())

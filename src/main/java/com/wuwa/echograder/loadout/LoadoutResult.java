@@ -12,6 +12,7 @@ import com.wuwa.echograder.score.MainStat;
 public record LoadoutResult(
         UUID id,
         String name,
+        String characterName,
         MainStat firstEchoMainStat,
         BigDecimal score,
         Grade grade,
@@ -27,6 +28,7 @@ public record LoadoutResult(
         return new LoadoutResult(
                 loadout.getId(),
                 loadout.getName(),
+                loadout.getCharacterName(),
                 loadout.getFirstEchoMainStat(),
                 loadout.getScore(),
                 loadout.getGrade(),

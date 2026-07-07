@@ -38,9 +38,26 @@ class RequestRateLimitFilterTest {
         assertThat(executeLogin("192.0.2.20").getStatus()).isEqualTo(200);
     }
 
+    @Test
+    void usesForwardedClientAddressBehindTrustedProxy() throws Exception {
+        for (int attempt = 1; attempt <= 10; attempt++) {
+            executeLogin("10.0.0.2", "198.51.100.10");
+        }
+
+        assertThat(executeLogin("10.0.0.2", "198.51.100.10").getStatus()).isEqualTo(429);
+        assertThat(executeLogin("10.0.0.2", "198.51.100.20").getStatus()).isEqualTo(200);
+    }
+
     private MockHttpServletResponse executeLogin(String remoteAddress) throws Exception {
+        return executeLogin(remoteAddress, null);
+    }
+
+    private MockHttpServletResponse executeLogin(String remoteAddress, String forwardedFor) throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/v1/auth/login");
         request.setRemoteAddr(remoteAddress);
+        if (forwardedFor != null) {
+            request.addHeader("X-Forwarded-For", forwardedFor);
+        }
         MockHttpServletResponse response = new MockHttpServletResponse();
         filter.doFilter(request, response, new MockFilterChain());
         return response;

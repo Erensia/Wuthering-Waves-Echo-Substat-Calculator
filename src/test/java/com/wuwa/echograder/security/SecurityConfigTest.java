@@ -20,6 +20,8 @@ import com.wuwa.echograder.loadout.LoadoutService;
 import com.wuwa.echograder.score.ScoreService;
 import com.wuwa.echograder.web.AuthController;
 import com.wuwa.echograder.web.CsrfController;
+import com.wuwa.echograder.web.DashboardController;
+import com.wuwa.echograder.web.HealthController;
 import com.wuwa.echograder.web.LoadoutController;
 import com.wuwa.echograder.web.ScoreController;
 
@@ -35,6 +37,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(controllers = {
         AuthController.class,
         CsrfController.class,
+        DashboardController.class,
+        HealthController.class,
         LoadoutController.class,
         ScoreController.class
 })
@@ -66,6 +70,13 @@ class SecurityConfigTest {
     }
 
     @Test
+    void permitsHealthCheckWithoutSession() throws Exception {
+        mockMvc.perform(get("/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
     void rejectsStateChangingRequestWithoutCsrfToken() throws Exception {
         mockMvc.perform(post("/api/v1/scores/calculate")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -76,6 +87,9 @@ class SecurityConfigTest {
     @Test
     void rejectsProtectedApiWithoutSignedInSession() throws Exception {
         mockMvc.perform(get("/api/v1/loadouts"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(get("/api/v1/dashboard/characters"))
                 .andExpect(status().isUnauthorized());
     }
 

@@ -24,6 +24,7 @@ const passwordChangeUsername = document.querySelector("#password-change-username
 const passwordChangeMessage = document.querySelector("#password-change-message");
 const cancelPasswordChange = document.querySelector("#cancel-password-change");
 const openPasswordChangeButton = document.querySelector("#open-password-change");
+const dashboardSection = document.querySelector("#character-dashboard");
 const characterChart = document.querySelector("#character-chart");
 const dashboardMessage = document.querySelector("#dashboard-message");
 const costTotal = document.querySelector("#cost-total");
@@ -40,7 +41,6 @@ const critDamageValues = [0, 12.6, 13.8, 15, 16.2, 17.4, 18.6, 19.8, 21];
 
 buildEchoInputs();
 updateCostUi();
-loadCharacterDashboard();
 restoreSession();
 
 scoreForm.addEventListener("submit", async (event) => {
@@ -82,6 +82,7 @@ saveButton.addEventListener("click", async () => {
             method: "POST",
             body: JSON.stringify({
                 name: document.querySelector("#loadout-name").value,
+                characterName: document.querySelector("#character-name").value,
                 scoreRequest: lastRequest
             })
         });
@@ -252,6 +253,7 @@ async function restoreSession() {
     try {
         currentUser = await api("/api/v1/auth/me");
         await loadSavedLoadouts();
+        await loadCharacterDashboard();
     } catch (error) {
         currentUser = null;
     }
@@ -272,6 +274,7 @@ async function authenticate(action) {
         document.querySelector("#password").value = "";
         updateAccountUi();
         await loadSavedLoadouts();
+        await loadCharacterDashboard();
     } catch (error) {
         authMessage.textContent = error.message;
     }
@@ -311,6 +314,7 @@ function applyLoadout(loadout) {
     if (mainStat) {
         mainStat.checked = true;
     }
+    document.querySelector("#character-name").value = loadout.characterName || "";
     document.querySelector("#loadout-name").value = loadout.name || "";
     loadout.echoes.forEach((echo) => {
         const slot = echo.slotNumber;
@@ -352,6 +356,7 @@ function renderSavedLoadouts() {
             <div class="saved-card-heading">
                 <div>
                     <h3>${escapeHtml(loadout.name || "이름 없는 세트")}</h3>
+                    ${loadout.characterName ? `<p class="character-name">${escapeHtml(loadout.characterName)}</p>` : ""}
                     <time>${formatDate(loadout.createdAt)}</time>
                 </div>
                 <div class="saved-score">
@@ -494,6 +499,7 @@ function updateAccountUi() {
     authForm.classList.toggle("hidden", signedIn);
     signedInPanel.classList.toggle("hidden", !signedIn);
     savedSection.classList.toggle("hidden", !signedIn);
+    dashboardSection.classList.toggle("hidden", !signedIn);
     loginHint.classList.toggle("hidden", signedIn);
     saveButton.disabled = !signedIn;
     if (signedIn) {
@@ -504,6 +510,8 @@ function updateAccountUi() {
         memberSearchForm.reset();
         memberSearchMessage.textContent = "";
         memberResults.innerHTML = "";
+        characterChart.innerHTML = "";
+        dashboardMessage.textContent = "";
         closePasswordChange();
     }
 }

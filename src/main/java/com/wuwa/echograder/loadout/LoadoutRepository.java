@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface LoadoutRepository extends JpaRepository<Loadout, UUID> {
 
@@ -13,15 +14,17 @@ public interface LoadoutRepository extends JpaRepository<Loadout, UUID> {
     List<Loadout> findAllByUserIdOrderByScoreDescNameAscCreatedAtDesc(UUID userId);
 
     @Query("""
-            select l.name as characterName,
+            select l.characterName as characterName,
                    max(l.score) as bestScore,
                    count(l) as loadoutCount
             from Loadout l
-            where l.name is not null and trim(l.name) <> ''
-            group by l.name
-            order by max(l.score) desc, l.name asc
+            where l.user.id = :userId
+              and l.characterName is not null
+              and trim(l.characterName) <> ''
+            group by l.characterName
+            order by max(l.score) desc, l.characterName asc
             """)
-    List<CharacterScoreSummary> findCharacterScoreSummaries();
+    List<CharacterScoreSummary> findCharacterScoreSummariesByUserId(@Param("userId") UUID userId);
 
     long deleteByIdAndUserId(UUID id, UUID userId);
 }

@@ -46,7 +46,7 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
         }
 
         long now = clock.instant().getEpochSecond();
-        String key = request.getRemoteAddr() + ":" + policy.name();
+        String key = clientAddress(request) + ":" + policy.name();
         LimitResult result = counters
                 .computeIfAbsent(key, ignored -> new WindowCounter(now))
                 .increment(now, policy);
@@ -82,6 +82,31 @@ public class RequestRateLimitFilter extends OncePerRequestFilter {
             return USER_SEARCH_POLICY;
         }
         return null;
+    }
+
+    private String clientAddress(HttpServletRequest request) {
+        String remoteAddress = request.getRemoteAddr();
+        if (!isTrustedProxy(remoteAddress)) {
+            return remoteAddress;
+        }
+
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor == null || forwardedFor.isBlank()) {
+            return remoteAddress;
+        }
+
+        String firstAddress = forwardedFor.split(",", 2)[0].strip();
+        return firstAddress.isEmpty() ? remoteAddress : firstAddress;
+    }
+
+    private boolean isTrustedProxy(String remoteAddress) {
+        return remoteAddress != null
+                && (remoteAddress.equals("127.0.0.1")
+                || remoteAddress.equals("0:0:0:0:0:0:0:1")
+                || remoteAddress.equals("::1")
+                || remoteAddress.startsWith("10.")
+                || remoteAddress.startsWith("192.168.")
+                || remoteAddress.matches("^172\\.(1[6-9]|2\\d|3[0-1])\\..*"));
     }
 
     private record Policy(String name, int limit, long windowSeconds) {

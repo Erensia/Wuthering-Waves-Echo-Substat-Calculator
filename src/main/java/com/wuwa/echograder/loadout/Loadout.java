@@ -33,6 +33,9 @@ public class Loadout {
     @Column(length = 100)
     private String name;
 
+    @Column(name = "character_name", length = 100)
+    private String characterName;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "first_echo_main_stat", nullable = false, length = 30)
     private MainStat firstEchoMainStat;
@@ -60,11 +63,13 @@ public class Loadout {
     public Loadout(
             UserAccount user,
             String name,
+            String characterName,
             MainStat firstEchoMainStat,
             BigDecimal score,
             Grade grade) {
         this.user = user;
         this.name = name;
+        this.characterName = characterName;
         this.firstEchoMainStat = firstEchoMainStat;
         this.score = score;
         this.grade = grade;
@@ -91,6 +96,10 @@ public class Loadout {
 
     public String getName() {
         return name;
+    }
+
+    public String getCharacterName() {
+        return characterName;
     }
 
     public Instant getCreatedAt() {

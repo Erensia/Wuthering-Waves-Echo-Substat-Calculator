@@ -71,10 +71,12 @@ class LoadoutServiceTest {
                 return 2;
             }
         };
-        when(repository.findCharacterScoreSummaries()).thenReturn(List.of(summary));
+        UUID userId = UUID.randomUUID();
+        when(user.getId()).thenReturn(userId);
+        when(repository.findCharacterScoreSummariesByUserId(userId)).thenReturn(List.of(summary));
 
         List<CharacterScoreResult> result =
-                new LoadoutService(repository, scoreService).findCharacterScores();
+                new LoadoutService(repository, scoreService).findCharacterScores(user);
 
         assertThat(result).singleElement().satisfies(character -> {
             assertThat(character.characterName()).isEqualTo("금희");

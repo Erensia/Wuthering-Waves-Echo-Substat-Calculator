@@ -28,6 +28,7 @@ public class LoadoutService {
         Loadout loadout = new Loadout(
                 user,
                 normalizeName(request.name()),
+                normalizeName(request.characterName()),
                 request.scoreRequest().firstEchoMainStat(),
                 result.score(),
                 result.grade());
@@ -53,8 +54,8 @@ public class LoadoutService {
     }
 
     @Transactional(readOnly = true)
-    public List<CharacterScoreResult> findCharacterScores() {
-        return repository.findCharacterScoreSummaries().stream()
+    public List<CharacterScoreResult> findCharacterScores(UserAccount user) {
+        return repository.findCharacterScoreSummariesByUserId(user.getId()).stream()
                 .map(CharacterScoreResult::from)
                 .toList();
     }
